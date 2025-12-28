@@ -32,17 +32,16 @@ app.post('/webhook', async (req, res) => {
     const body = req.body;
 
     if (body.object === 'whatsapp_business_account') {
-      body.entry.forEach(async (entry) => {
-        const changes = entry.changes;
-        
-        changes.forEach(async (change) => {
+      // ✅ USAR FOR...OF EN LUGAR DE FOREACH
+      for (const entry of body.entry) {
+        for (const change of entry.changes) {
           if (change.field === 'messages') {
             const value = change.value;
             
-            if (value.messages) {
+            if (value.messages && value.messages.length > 0) {
               const message = value.messages[0];
               const from = message.from;
-              const messageText = message.text?.body;
+              const messageText = message.text?.body || 'Sin texto';
 
               console.log(`📩 Mensaje recibido de ${from}: ${messageText}`);
 
@@ -50,8 +49,8 @@ app.post('/webhook', async (req, res) => {
               await sendWhatsAppMessage(from, `¡Hola! Soy el chatbot de Frutaza 🍎🍊\n\nRecibí tu mensaje: "${messageText}"\n\n¿En qué puedo ayudarte hoy?`);
             }
           }
-        });
-      });
+        }
+      }
 
       res.sendStatus(200);
     } else {
@@ -81,7 +80,7 @@ async function sendWhatsAppMessage(to, message) {
       }
     );
 
-    console.log('✅ Mensaje enviado correctamente');
+    console.log('✅ Mensaje enviado correctamente a:', to);
     return response.data;
   } catch (error) {
     console.error('❌ Error enviando mensaje:', error.response?.data || error.message);
